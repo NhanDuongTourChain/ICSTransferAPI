@@ -52,19 +52,6 @@ Creates a new or updates an existing ICS transfer booking (airport transfer: Bal
 
 ---
 
-### Update: Input Tolerance
-
-The `booking-complete` webhook now accepts a more tolerant payload for optional travel and geo fields:
-
-- Date fields accept both `YYYY-MM-DD` and ISO datetime
-- `countryCodePhone` accepts values with or without `+`
-- `time`, `flightNumber`, `channelFareType` can be empty, `null`, or `N/A`
-- `accommodation_items[].id`, `hotel_info.id`, and `geo_data.place_id` can be empty, `null`, or `N/A`
-- Extra JSON fields are ignored safely
-- Region resolution is best-effort only and does not block the webhook if geo enrichment cannot be resolved
-
----
-
 ### 2.1 Request Body
 
 ```json
@@ -150,10 +137,10 @@ The `booking-complete` webhook now accepts a more tolerant payload for optional 
 | Field                | Type      | Required                               | Description                                                                      |
 |----------------------|-----------|----------------------------------------|----------------------------------------------------------------------------------|
 | `type`               | `string`  | ✅ Yes                                 | Transfer direction: `"arrival"`, `"departure"`, or `"arrival-and-departure"`    |
-| `checkInDate`        | `string`  | ❌ No                                  | Check-in date. Accepts `"YYYY-MM-DD"` or ISO datetime                           |
-| `checkOutDate`       | `string`  | ❌ No                                  | Check-out date. Accepts `"YYYY-MM-DD"` or ISO datetime                          |
+| `checkInDate`        | `string`  | ❌ No                                  | Check-in date. Format: `"YYYY-MM-DD"`                                           |
+| `checkOutDate`       | `string`  | ❌ No                                  | Check-out date. Format: `"YYYY-MM-DD"`                                          |
 | `fullname`           | `string`  | ✅ Yes                                 | Full name of the lead passenger                                                  |
-| `countryCodePhone`   | `string`  | ❌ No                                  | Country phone code. Accepts `"+84"` or `"84"`                                   |
+| `countryCodePhone`   | `string`  | ❌ No                                  | Country phone code. e.g. `"+84"`                                                |
 | `phone`              | `string`  | ❌ No                                  | Phone number (without country code)                                              |
 | `luggage`            | `integer` | ❌ No (default: `0`)                   | Number of luggage pieces. Must be >= 0                                           |
 | `oversizeLuggage`    | `integer` | ❌ No (default: `0`)                   | Oversize luggage. Accepts only `0` or `1`                                        |
@@ -170,10 +157,10 @@ The `booking-complete` webhook now accepts a more tolerant payload for optional 
 
 | Field          | Type      | Required               | Description                                               |
 |----------------|-----------|------------------------|-----------------------------------------------------------|
-| `date`         | `string`  | ❌ No                  | Flight date. Accepts `"YYYY-MM-DD"` or ISO datetime. Can be empty, `null`, or `N/A` |
-| `time`         | `string`  | ❌ No                  | Flight time. Accepts `"HH:mm"`, empty, `null`, or `N/A`   |
-| `flightNumber` | `string`  | ❌ No                  | IATA flight number or empty, `null`, `N/A`                |
-| `channelFareType` | `string` | ❌ No                | Transfer fare/service code used for downstream service sync. Can be empty, `null`, or `N/A` |
+| `date`         | `string`  | ✅ Yes                 | Flight date. Format: `"YYYY-MM-DD"`                       |
+| `time`         | `string`  | ❌ No (can be empty)   | Flight time. Format: `"HH:mm"` (24h). e.g. `"14:30"`     |
+| `flightNumber` | `string`  | ❌ No (can be empty)   | IATA flight number. e.g. `"VN123"`                        |
+| `channelFareType` | `string` | ❌ No                | Transfer fare/service code used for downstream service sync |
 | `adults`       | `integer` | ✅ Yes                 | Number of adults. Must be >= 1                            |
 | `children`     | `integer` | ❌ No (default: `0`)   | Number of children. Must be >= 0                          |
 
@@ -183,7 +170,7 @@ The `booking-complete` webhook now accepts a more tolerant payload for optional 
 
 | Field         | Type     | Required | Description                                        |
 |---------------|----------|----------|----------------------------------------------------|
-| `id`          | `string` | ❌ No    | Accommodation item ID. Can be empty, `null`, or `N/A` |
+| `id`          | `string` | ✅ Yes   | Accommodation item ID                              |
 | `reservation` | `object` | ✅ Yes   | Reservation details. See `reservation` table below |
 
 ---
@@ -192,8 +179,8 @@ The `booking-complete` webhook now accepts a more tolerant payload for optional 
 
 | Field        | Type     | Required | Description                                        |
 |--------------|----------|----------|-------------------------------------------------|
-| `check_in`   | `string` | ✅ Yes   | Check-in date. Accepts `"YYYY-MM-DD"` or ISO datetime |
-| `check_out`  | `string` | ✅ Yes   | Check-out date. Accepts `"YYYY-MM-DD"` or ISO datetime |
+| `check_in`   | `string` | ✅ Yes   | Check-in date. Format: `"YYYY-MM-DD"`             |
+| `check_out`  | `string` | ✅ Yes   | Check-out date. Format: `"YYYY-MM-DD"`            |
 | `hotel_info` | `object` | ✅ Yes   | Hotel information. See `hotel_info` table below   |
 
 ---
@@ -202,7 +189,7 @@ The `booking-complete` webhook now accepts a more tolerant payload for optional 
 
 | Field      | Type     | Required | Description                                                  |
 |------------|----------|----------|--------------------------------------------------------------|
-| `id`       | `string` | ❌ No    | Unique hotel ID in the system. Can be empty, `null`, or `N/A` |
+| `id`       | `string` | ✅ Yes   | Unique hotel ID in the system                                |
 | `name`     | `string` | ✅ Yes   | Hotel name                                                   |
 | `geo_data` | `object` | ❌ No    | Hotel geographic data                                        |
 
@@ -214,7 +201,7 @@ The `booking-complete` webhook now accepts a more tolerant payload for optional 
 |--------------------------------|----------|----------|-----------------------------------------------|
 | `country`                      | `string` | ❌ No    | Country name. e.g. `"Indonesia"`              |
 | `administrative_area_level_1`  | `string` | ❌ No    | Province/Region. e.g. `"Bali"`                |
-| `place_id`                     | `string` | ❌ No    | Google Place ID. Can be empty, `null`, or `N/A` |
+| `place_id`                     | `string` | ❌ No    | Google Place ID                               |
 
 ---
 
@@ -231,18 +218,18 @@ The `booking-complete` webhook now accepts a more tolerant payload for optional 
 | `transfer_information`         | Must not be null                                                           |
 | `transfer_information.type`    | Must be `"arrival"`, `"departure"`, or `"arrival-and-departure"`          |
 | `transfer_information.fullname`| Must not be empty                                                          |
-| `arrival.date`                 | Optional. If provided, must be `YYYY-MM-DD` or a valid ISO datetime        |
+| `arrival.date`                 | Required when type is `arrival` or `arrival-and-departure`                 |
 | `arrival.adults`               | Must be >= 1                                                               |
-| `departure.date`               | Optional. If provided, must be `YYYY-MM-DD` or a valid ISO datetime        |
+| `departure.date`               | Required when type is `departure` or `arrival-and-departure`               |
 | `departure.adults`             | Must be >= 1                                                               |
 | `luggage`                      | Must be >= 0                                                               |
 | `oversizeLuggage`              | Must be `0` or `1` only                                                    |
 | `babyCarSeat`                  | Must be `0` or `1` only                                                    |
 | `accommodation_items`          | Must not be empty. At least 1 item required                                |
-| `accommodation_items[].id`     | Optional. Empty, `null`, and `N/A` are accepted                           |
+| `accommodation_items[].id`     | Must not be empty                                                          |
 | `reservation.check_in`         | Must not be empty                                                          |
 | `reservation.check_out`        | Must not be empty                                                          |
-| `hotel_info.id`                | Optional. Empty, `null`, and `N/A` are accepted                           |
+| `hotel_info.id`                | Must not be empty                                                          |
 | `hotel_info.name`              | Must not be empty                                                          |
 
 ---
